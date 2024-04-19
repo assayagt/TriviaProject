@@ -105,10 +105,11 @@ class Server:
     def setCorrectAnswer(self, random_question):
         self.currentCorrectAnswer = self.trivia_questions[self.trivia_questions.index(random_question)]['is_true']
     
+    def enoughConnected(self):
+        return len(self.clientHandlers) >= 2
+
+    
     def initializeGame(self):
-        if len(self.clientHandlers) < 1:
-            print("No clients connected to this trivia...")
-            return
         player_names = ["Player" + str(index + 1) + ": " + client.getPlayerName() + "\n" for index, client in enumerate(self.clientHandlers)]
         welcome_message = f"Welcome to the Mystic server, where we are answering trivia questions about Aston Villa FC.\n {' '.join(player_names)}"
         
@@ -124,7 +125,8 @@ class Server:
         for client in self.clientHandlers:
             try:
                 client.sendInfoToClient(random_question_to_print)
-            except:
+            except ConnectionResetError:
+                self.clientHandlers.remove(client)
                 break
             if not client.getIfStarted():
                 client.startGame()
@@ -137,7 +139,10 @@ class Server:
     def sendTimeoutMsg(self):
         msg = "\nTime is up. You'll get a new question."
         for client in self.clientHandlers:
-            client.sendInfoToClient(msg)
+            try:
+                client.sendInfoToClient(msg)
+            except ConnectionResetError:
+                self.clientHandlers.remove(client)
         print(msg)
 
 
@@ -154,7 +159,8 @@ class Server:
             try:
                 other_client.endGame()
                 other_client.sendInfoToClient(winner_message)
-            except:
+            except ConnectionResetError:
+                self.clientHandlers.remove(other_client)
                 continue
         self.gameTime.set()
 
@@ -167,13 +173,15 @@ class Server:
         print(disqMsg)
         for client in self.clientHandlers:
             client.contGame()
-            client.sendInfoToClient(disqMsg)
+            try:
+                client.sendInfoToClient(disqMsg)
+            except ConnectionResetError:
+                self.clientHandlers.remove(client)
         self.gameTime.set()
         
 
-    def clearHandlers(self):
+    def clearHandlers(self, end_message):
         # Close all client sockets
-        end_message = f"Game over!\nCongratulations to the winner: {self.winner_name}"
         for client in self.clientHandlers:
             try:
                 client.resetAnswer()
@@ -188,6 +196,9 @@ class Server:
     def getWinnerFound(self):
         return self.winner_found
     
+    def getWinnerName(self):
+        return self.winner_name
+    
     def resetGame(self):
         self.currentCorrectAnswer = None
         self.gameTime.clear()
@@ -196,7 +207,7 @@ class Server:
     def resetWinner(self):
         self.winner_found = False
         self.winner_name = None
-
+        
 
 def Main():
     server = Server()
@@ -207,11 +218,17 @@ def Main():
         acceptClientsThread.start()
         server.waitForClients(tcpSocket, udpSocekt)
         server.initializeGame()
-        while not server.getWinnerFound():
+        while not server.getWinnerFound() and server.enoughConnected():
             server.handleGameMode()
             server.resetGame()
-        server.clearHandlers()
-        server.resetWinner()
+        if server.enoughConnected():
+            end_msg = f"Game over!\nCongratulations to the winner: {server.getWinnerName()}"
+            server.clearHandlers(end_msg)
+            server.resetWinner()
+        else:
+            end_msg = "Unfortunatly, there are not enough players to play the game."
+            server.clearHandlers(end_msg)
+            print(end_msg)
         print("Game over, sending out offer requests...")
 
 
