@@ -90,10 +90,3 @@ class ClientHandler:
                         self.server.releaseDisqs()
                     else:
                         self.continueGame.wait()
-
-
-
-
-                    
-
-            
