@@ -12,7 +12,7 @@ class Server:
     UDP_PORT = 13117
     MAGIC_COOKIE = 0xabcddcba
     MESSAGE_TYPE = 0x2
-    SERVER_PORT = 2017
+    SERVER_PORT = 12345
     SERVER_NAME = "TeamMysticServer".ljust(32, '\0')  # Make the server name 32 characters long
     POSSIBLE_TRUE = ['Y', 'T', '1']
     POSSIBLE_FALSE = ['N', 'F', '0']
@@ -51,7 +51,7 @@ class Server:
         self.timeOut = 0
 
     def initUDP(self):
-        udpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        udpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         udpSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         udpSocket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         udpSocket.bind((socket.gethostbyname(socket.gethostname()), self.UDP_PORT))
@@ -59,7 +59,7 @@ class Server:
 
     def createTCPsocket(self):
         tcp_server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        tcp_server_socket.bind((socket.gethostbyname(socket.gethostname()), self.SERVER_PORT))
+        tcp_server_socket.bind(('', self.SERVER_PORT))
         tcp_server_socket.listen(5)
         return tcp_server_socket
 
