@@ -83,7 +83,7 @@ class ClientHandler:
                 if self.server.checkResponse(self.answer):
                     self.server.announceWinner(self.getPlayerName())
                 else:
-                    wrongMsg = "You are wrong. try next time."
+                    wrongMsg = "\nYou are wrong. try next time."
                     self.sendInfoToClient(wrongMsg)
                     lastDisq = self.server.announceDisqualify()
                     if lastDisq:

@@ -130,6 +130,15 @@ class Server:
         print(random_question_to_print)
 
         self.gameTime.wait(self.WAITING_TIME)
+        if not self.winner_found and not self.countDisqs == len(self.clientHandlers):
+            self.sendTimeoutMsg()
+    
+    def sendTimeoutMsg(self):
+        msg = "\nTime is up. You'll get a new question."
+        for client in self.clientHandlers:
+            client.sendInfoToClient(msg)
+        print(msg)
+
 
     def checkResponse(self, response):
         return response in self.POSSIBLE_TRUE and self.currentCorrectAnswer or response in self.POSSIBLE_FALSE and not self.currentCorrectAnswer
