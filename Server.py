@@ -4,6 +4,7 @@ import struct
 import time
 import threading
 from ClientHandler import ClientHandler
+from bcolors import bcolors
 
 class Server:
     # Constants
@@ -57,13 +58,13 @@ class Server:
         udpSocket.bind((socket.gethostbyname(socket.gethostname()), self.UDP_PORT))
         return udpSocket
 
-    def createTCPsocket(self):
+    def initTCPsocket(self):
         tcp_server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         tcp_server_socket.bind(('', self.SERVER_PORT))
         tcp_server_socket.listen(5)
         return tcp_server_socket
 
-    def waitForClients(self, tcpSocekt, udpSocket):
+    def waitForConnections(self, tcpSocekt, udpSocket):
         print("Server started listening on IP address " + socket.gethostbyname(socket.gethostname()))
         self.resetTimer()
         while True:
@@ -81,7 +82,7 @@ class Server:
         message = struct.pack("!Ic32sH", self.MAGIC_COOKIE, bytes([self.MESSAGE_TYPE]), self.SERVER_NAME.encode(), self.SERVER_PORT)
         udpSocket.sendto(message, ('<broadcast>', self.UDP_PORT))
 
-    def acceptClients(self, tcpSocket):
+    def acceptConnections(self, tcpSocket):
         while True:
             try:
                 clientSocket, addr = tcpSocket.accept()
@@ -106,7 +107,7 @@ class Server:
         self.currentCorrectAnswer = self.trivia_questions[self.trivia_questions.index(random_question)]['is_true']
     
     def enoughConnected(self):
-        return len(self.clientHandlers) >= 2
+        return len(self.clientHandlers) >= 1
 
     
     def initializeGame(self):
@@ -152,9 +153,9 @@ class Server:
     def announceWinner(self, winner_name):
         self.winner_found = True
         self.winner_name = winner_name
-        print(f"\n{winner_name} is correct! {winner_name} wins!")
+        print(f"\n{bcolors.OKGREEN}{winner_name} is correct! {winner_name} wins!{bcolors.ENDC}")
         # Broadcast message to all clients about the winner
-        winner_message = f"\n{winner_name} is correct! {winner_name} wins!"
+        winner_message = f"\n{bcolors.OKGREEN}{winner_name} is correct! {winner_name} wins!{bcolors.ENDC}"
         for other_client in self.clientHandlers:
             try:
                 other_client.endGame()
@@ -163,13 +164,14 @@ class Server:
                 self.clientHandlers.remove(other_client)
                 continue
         self.gameTime.set()
+        
 
     def announceDisqualify(self):
         self.countDisqs += 1
         return self.countDisqs == len(self.clientHandlers)
     
     def releaseDisqs(self):
-        disqMsg = "\nYou are all wrong and disqualified, but I'll give you another chance :)\n"
+        disqMsg = f"\n{bcolors.WARNING}You are all wrong and disqualified, but I'll give you another chance :){bcolors.ENDC}\n"
         print(disqMsg)
         for client in self.clientHandlers:
             client.contGame()
@@ -213,23 +215,23 @@ def Main():
     server = Server()
     udpSocekt = server.initUDP()
     while True:
-        tcpSocket = server.createTCPsocket()
-        acceptClientsThread = threading.Thread(target=server.acceptClients, args=(tcpSocket,))
-        acceptClientsThread.start()
-        server.waitForClients(tcpSocket, udpSocekt)
+        tcpSocket = server.initTCPsocket()
+        acceptConnectionsThread = threading.Thread(target=server.acceptConnections, args=(tcpSocket,))
+        acceptConnectionsThread.start()
+        server.waitForConnections(tcpSocket, udpSocekt)
         server.initializeGame()
         while not server.getWinnerFound() and server.enoughConnected():
             server.handleGameMode()
             server.resetGame()
         if server.enoughConnected():
-            end_msg = f"Game over!\nCongratulations to the winner: {server.getWinnerName()}"
+            end_msg = f"{bcolors.OKCYAN}Game over!\nCongratulations to the winner: {server.getWinnerName()}{bcolors.ENDC}"
             server.clearHandlers(end_msg)
             server.resetWinner()
         else:
-            end_msg = "Unfortunatly, there are not enough players to play the game."
+            end_msg = f"{bcolors.WARNING}Unfortunately, there are not enough players to play the game.{bcolors.ENDC}"
             server.clearHandlers(end_msg)
             print(end_msg)
-        print("Game over, sending out offer requests...")
+        print(f"{bcolors.OKBLUE}Game over, sending out offer requests...{bcolors.ENDC}")
 
 
 if __name__ == '__main__':
