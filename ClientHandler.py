@@ -1,13 +1,12 @@
-import select
-import time
 import socket
 import threading
+from bcolors import bcolors
 
 
 class ClientHandler:
     playerName = ""
     bufferSize = 1024
-    sem = threading.Semaphore(0)
+    semaphore = threading.Semaphore(0)
     answer = None
     started = False
     def __init__(self, clientSocket, server):
@@ -17,10 +16,8 @@ class ClientHandler:
         
 
     def Run(self):
-
         self.recvPlayerName()
-        self.waitForStart()
-        #self.recvClientAnswer()
+        self.waitGameStart()
         self.manageGame()
 
     def recvPlayerName(self):
@@ -40,11 +37,11 @@ class ClientHandler:
     def sendInfoToClient(self, msgInfo):
         self.clientSocket.sendall(msgInfo.encode())
 
-    def waitForStart(self):
-        self.sem.acquire()
+    def waitGameStart(self):
+        self.semaphore.acquire()
 
     def startGame(self):
-        self.sem.release()
+        self.semaphore.release()
         self.started = True
     
     def endGame(self):
@@ -74,7 +71,7 @@ class ClientHandler:
         self.continueGame.set()
 
     def manageGame(self):
-        while not self.server.getWinnerFound():
+        while not self.server.getWinnerFound() and self.server.enoughConnected():
 
             self.recvClientAnswer()
 
@@ -83,8 +80,11 @@ class ClientHandler:
                 if self.server.checkResponse(self.answer):
                     self.server.announceWinner(self.getPlayerName())
                 else:
-                    wrongMsg = "\nYou are wrong. try next time."
-                    self.sendInfoToClient(wrongMsg)
+                    wrongMsg = f"\n{bcolors.FAIL}You are wrong. try next time.{bcolors.ENDC}"
+                    try:
+                        self.sendInfoToClient(wrongMsg)
+                    except:
+                        break
                     lastDisq = self.server.announceDisqualify()
                     if lastDisq:
                         self.server.releaseDisqs()
