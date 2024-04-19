@@ -35,10 +35,14 @@ chief_of_staff_names = [
 terminate_event = threading.Event()
 
 def createUDPSocket():
-    udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    udp_socket.bind(('', 13117))
-    return udp_socket
+    try:
+        udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        udp_socket.bind(('', 13117))
+        return udp_socket
+    except OSError as e:
+        print("\nError creating UDP socket")
+        return None
 
 # Function to listen for offer announcements
 def listen_for_offers(udp_socket):
@@ -53,17 +57,22 @@ def listen_for_offers(udp_socket):
         
 # Function to establish TCP connection with the server
 def connect_to_server(server_ip, server_port):
-    # Create a TCP socket
-    tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # Connect to the server
-    tcp_socket.connect((server_ip, server_port))
-    print("Connected!")
+    try:
+        # Create a TCP socket
+        tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # Connect to the server
+        tcp_socket.connect((server_ip, server_port))
+        print("Connected!")
 
-    # Send player name
-    player_name = random.choice(chief_of_staff_names)  # Change this to the player's name
-    tcp_socket.sendall(player_name.encode())
-
-    return tcp_socket
+        # Send player name
+        player_name = random.choice(chief_of_staff_names)  # Change this to the player's name
+        tcp_socket.sendall(player_name.encode())
+        
+        return tcp_socket
+    
+    except Exception as e:
+        print("\nFailed to connect to the server")
+        return None
 
 # Function to handle user input
 
@@ -73,7 +82,7 @@ def get_user_input(tcp_socket):
             try:
                 tcp_socket.send(msvcrt.getche())
             except Exception as e:
-                print(f"Error sending data to server: {e}")
+                print(f"\nError sending data to server")
                 break
 
 # Function to handle receiving data from the server
@@ -110,28 +119,32 @@ def game_mode(tcp_socket):
 
 if __name__ == "__main__":
     print("Client started, listening for offer requests...")
-    # Start a thread to listen for offer announcements
-    udpSocket = createUDPSocket()
+    
     while True:
+        # Start a thread to listen for offer announcements
+        udpSocket = createUDPSocket()
 
-        terminate_event.clear()
+        if udpSocket is not None:
+            terminate_event.clear()
 
-        try:
-            server_ip, server_port = listen_for_offers(udpSocket)
-        except:
-            print("Cant find any proper offers, trying again.")
-            continue
+            try:
+                server_ip, server_port = listen_for_offers(udpSocket)
+            except:
+                print("Cant find any proper offers, trying again.")
+                continue
 
-        try:
-            tcp_socket = connect_to_server(server_ip, server_port)
-        except:
-            print("Cant connect to server. looking for a new one")
-            tcp_socket.close()
-            continue
+            try:
+                tcp_socket = connect_to_server(server_ip, server_port)
+            except:
+                print("Cant connect to server. looking for a new one")
+                tcp_socket.close()
+                continue
 
-        try:
-            game_mode(tcp_socket)
-        except:
-            print("Problem occurred in game, looking for new server")
-                
-        print("Server disconnected, listening for offer requests...")
+            try:
+                if tcp_socket is not None:
+                    udpSocket.close()
+                game_mode(tcp_socket)
+            except:
+                print("Problem occurred in game, looking for new server")
+                    
+            print("Server disconnected, listening for offer requests...")
