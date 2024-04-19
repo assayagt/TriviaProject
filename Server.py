@@ -107,7 +107,7 @@ class Server:
         self.currentCorrectAnswer = self.trivia_questions[self.trivia_questions.index(random_question)]['is_true']
     
     def enoughConnected(self):
-        return len(self.clientHandlers) >= 1
+        return len(self.clientHandlers) >= 2
 
     
     def initializeGame(self):
