@@ -68,13 +68,14 @@ class Server:
         self.resetTimer()
         while True:
             if (time.time() > self.timeOut):
+                #close the socket which accepts new clients
                 tcpSocekt.close()
                 break
             self.broadcastMessage(udpSocket)
             time.sleep(1)
     
     def resetTimer(self):
-        self.timeOut = time.time() + 10
+        self.timeOut = time.time() + self.WAITING_TIME
 
     def broadcastMessage(self, udpSocket):
         message = struct.pack("!Ic32sH", self.MAGIC_COOKIE, bytes([self.MESSAGE_TYPE]), self.SERVER_NAME.encode(), self.SERVER_PORT)
