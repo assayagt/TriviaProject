@@ -28,7 +28,7 @@ class Server:
         self.countDisqs = 0
         self.timeOut = 0
 
-        # init list of trivia questions about Aston Villa FC:
+        # init list of trivia questions about Israel:
         self.trivia_questions = trivia_questions
 
         # init variables for statistics:
@@ -101,7 +101,7 @@ class Server:
 
     
     def initializeGame(self):
-        welcome_message = f"Welcome to the Mystic server, where we are answering trivia questions about Aston Villa FC.\n"
+        welcome_message = f"Welcome to the Mystic server, where we are answering trivia questions about Israel.\n"
         clientsToRemove = []
         for client in self.clientHandlers:
             try:
@@ -115,7 +115,7 @@ class Server:
                 del other_client
         
         player_names = ["Player" + str(index + 1) + ": " + client.getPlayerName() + "\n" for index, client in enumerate(self.clientHandlers)]
-        fullMsg = welcome_message.join(player_names)
+        fullMsg = welcome_message + " ".join(player_names)
         for client in self.clientHandlers:
             try:
                 client.sendInfoToClient(''.join(player_names))
@@ -135,6 +135,7 @@ class Server:
             if not client.getIfStarted():
                 client.startGame()
 
+        time.sleep(0.1)
         for other_client in clientsToRemove:
             if other_client in self.clientHandlers:
                 self.clientHandlers.remove(other_client)
@@ -154,6 +155,7 @@ class Server:
             except ConnectionResetError:
                 clientsToRemove.append(client)
         
+        time.sleep(0.1)
         for other_client in clientsToRemove:
             if other_client in self.clientHandlers:
                 self.clientHandlers.remove(other_client)
@@ -177,11 +179,14 @@ class Server:
             except ConnectionResetError:
                 clientsToRemove.append(other_client)
                 continue
+        
+        time.sleep(0.1)
 
         for other_client in clientsToRemove:
             if other_client in self.clientHandlers:
                 self.clientHandlers.remove(other_client)
                 del other_client
+        time.sleep(0.1)
         self.gameTime.set()
         
 
@@ -199,7 +204,8 @@ class Server:
                 client.sendInfoToClient(disqMsg)
             except ConnectionResetError:
                 clientsToRemove.append(client)
-
+        
+        time.sleep(0.1)
         for other_client in clientsToRemove:
             if other_client in self.clientHandlers:
                 self.clientHandlers.remove(other_client)

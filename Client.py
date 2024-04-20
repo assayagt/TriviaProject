@@ -3,6 +3,7 @@ import struct
 import threading
 import msvcrt
 import random
+import time
 
 class Client:
     # Constants
@@ -85,6 +86,8 @@ class Client:
                 except Exception as e:
                     print(f"\nError sending data to server")
                     break
+
+            time.sleep(0.2)
 
     # Function to handle receiving data from the server
     def receive_data(self, tcp_socket):
