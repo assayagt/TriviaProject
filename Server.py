@@ -112,8 +112,7 @@ class Server:
 
     
     def initializeGame(self):
-        player_names = ["Player" + str(index + 1) + ": " + client.getPlayerName() + "\n" for index, client in enumerate(self.clientHandlers)]
-        welcome_message = f"Welcome to the Mystic server, where we are answering trivia questions about Aston Villa FC.\n {' '.join(player_names)}"
+        welcome_message = f"Welcome to the Mystic server, where we are answering trivia questions about Aston Villa FC.\n"
         clientsToRemove = []
         for client in self.clientHandlers:
             try:
@@ -125,7 +124,15 @@ class Server:
             if other_client in self.clientHandlers:
                 self.clientHandlers.remove(other_client)
                 del other_client
-        print(welcome_message)
+        
+        player_names = ["Player" + str(index + 1) + ": " + client.getPlayerName() + "\n" for index, client in enumerate(self.clientHandlers)]
+        fullMsg = welcome_message.join(player_names)
+        for client in self.clientHandlers:
+            try:
+                client.sendInfoToClient(''.join(player_names))
+            except:
+                continue
+        print(fullMsg)
 
     def handleGameMode(self):
         random_question_to_print = self.getRandomQuestion()
@@ -164,11 +171,11 @@ class Server:
                 del other_client
         print(msg)
 
-
     def checkResponse(self, response):
         return response in self.POSSIBLE_TRUE and self.currentCorrectAnswer or response in self.POSSIBLE_FALSE and not self.currentCorrectAnswer
 
     def announceWinner(self, winner_name):
+        clientsToRemove = []
         self.winner_found = True
         self.winner_name = winner_name
         print(f"\n{bcolors.OKGREEN}{winner_name} is correct! {winner_name} wins!{bcolors.ENDC}")
@@ -179,9 +186,13 @@ class Server:
                 other_client.endGame()
                 other_client.sendInfoToClient(winner_message)
             except ConnectionResetError:
+                clientsToRemove.append(other_client)
+                continue
+
+        for other_client in clientsToRemove:
+            if other_client in self.clientHandlers:
                 self.clientHandlers.remove(other_client)
                 del other_client
-                continue
         self.gameTime.set()
         
 
@@ -260,6 +271,7 @@ def Main():
             print(end_msg)
         print(f"{bcolors.OKBLUE}Game over, sending out offer requests...{bcolors.ENDC}")
 
-
 if __name__ == '__main__':
     Main()
+
+
