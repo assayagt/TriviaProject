@@ -1,0 +1,22 @@
+trivia_questions = [
+    {"question": "Aston Villa FC was founded in 1874.", "is_true": True, "wrongCounter": 0, "fastestTime": 100},
+    {"question": "Aston Villa has won the FA Cup 8 times.", "is_true": True, "wrongCounter": 0, "fastestTime": 100},
+    {"question": "The club's home ground is Villa Park.", "is_true": True, "wrongCounter": 0, "fastestTime": 100},
+    {"question": "Aston Villa FC has never won the Premier League.", "is_true": False, "wrongCounter": 0, "fastestTime": 100},
+    {"question": "The club's nickname is 'The Lions'.", "is_true": True, "wrongCounter": 0, "fastestTime": 100},
+    {"question": "Aston Villa has won the UEFA Champions League.", "is_true": False, "wrongCounter": 0, "fastestTime": 100},
+    {"question": "Villa's record signing is Darren Bent.", "is_true": False, "wrongCounter": 0, "fastestTime": 0},
+    {"question": "Aston Villa holds the record for most consecutive top-flight league titles.", "is_true": True, "wrongCounter": 0, "fastestTime": 100},
+    {"question": "The club's mascot is a lion named Hercules.", "is_true": True, "wrongCounter": 0, "fastestTime": 100},
+    {"question": "Aston Villa was one of the founding members of the Football League in 1888.", "is_true": True, "wrongCounter": 0, "fastestTime": 100},
+    {"question": "The team's traditional kit colors are claret and blue.", "is_true": True, "wrongCounter": 0, "fastestTime": 100},
+    {"question": "Aston Villa FC has never won the League Cup.", "is_true": False, "wrongCounter": 0, "fastestTime": 100},
+    {"question": "The Holte End is the largest single stand at Villa Park.", "is_true": True, "wrongCounter": 0, "fastestTime": 100},
+    {"question": "The club's all-time leading goalscorer is Peter Withe.", "is_true": False, "wrongCounter": 0, "fastestTime": 100},
+    {"question": "Aston Villa's main rivalry is with Birmingham City.", "is_true": True, "wrongCounter": 0, "fastestTime": 100},
+    {"question": "The team's current captain is Jack Grealish.", "is_true": True, "wrongCounter": 0, "fastestTime": 100},
+    {"question": "Aston Villa has been relegated from the Premier League multiple times.", "is_true": True, "wrongCounter": 0, "fastestTime": 100},
+    {"question": "The club's highest finish in the Premier League era is 4th place.", "is_true": True, "wrongCounter": 0, "fastestTime": 100},
+    {"question": "Aston Villa has won the European Cup.", "is_true": True, "wrongCounter": 0, "fastestTime": 100},
+    {"question": "The club's first manager was George Ramsay.", "is_true": True, "wrongCounter": 0, "fastestTime": 100}
+]
