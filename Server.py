@@ -5,6 +5,7 @@ import time
 import threading
 from ClientHandler import ClientHandler
 from bcolors import bcolors
+from Questions import trivia_questions
 
 class Server:
     # Constants
@@ -18,30 +19,6 @@ class Server:
     POSSIBLE_TRUE = ['Y', 'T', '1']
     POSSIBLE_FALSE = ['N', 'F', '0']
 
-    # List of trivia questions about Aston Villa FC
-    trivia_questions = [
-        {"question": "Aston Villa FC was founded in 1874.", "is_true": True},
-        {"question": "Aston Villa has won the FA Cup 8 times.", "is_true": True},
-        {"question": "The club's home ground is Villa Park.", "is_true": True},
-        {"question": "Aston Villa FC has never won the Premier League.", "is_true": False},
-        {"question": "The club's nickname is 'The Lions'.", "is_true": True},
-        {"question": "Aston Villa has won the UEFA Champions League.", "is_true": False},
-        {"question": "Villa's record signing is Darren Bent.", "is_true": False},
-        {"question": "Aston Villa holds the record for most consecutive top-flight league titles.", "is_true": True},
-        {"question": "The club's mascot is a lion named Hercules.", "is_true": True},
-        {"question": "Aston Villa was one of the founding members of the Football League in 1888.", "is_true": True},
-        {"question": "The team's traditional kit colors are claret and blue.", "is_true": True},
-        {"question": "Aston Villa FC has never won the League Cup.", "is_true": False},
-        {"question": "The Holte End is the largest single stand at Villa Park.", "is_true": True},
-        {"question": "The club's all-time leading goalscorer is Peter Withe.", "is_true": False},
-        {"question": "Aston Villa's main rivalry is with Birmingham City.", "is_true": True},
-        {"question": "The team's current captain is Jack Grealish.", "is_true": True},
-        {"question": "Aston Villa has been relegated from the Premier League multiple times.", "is_true": True},
-        {"question": "The club's highest finish in the Premier League era is 4th place.", "is_true": True},
-        {"question": "Aston Villa has won the European Cup.", "is_true": True},
-        {"question": "The club's first manager was George Ramsay.", "is_true": True}
-    ]
-
     def __init__(self):
         self.clientHandlers = []
         self.winner_found = False
@@ -51,6 +28,14 @@ class Server:
         self.countDisqs = 0
         self.timeOut = 0
 
+        # init list of trivia questions about Aston Villa FC:
+        self.trivia_questions = trivia_questions
+
+        # init variables for statistics:
+        self.currentQuestIndex = -1
+        self.fastestPlayerMsg = None
+    
+   
     def initUDP(self):
         udpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         udpSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -102,11 +87,15 @@ class Server:
         random_question_to_send = random_question["question"]
         random_question_to_send = f"\nTrue or false: {random_question_to_send}"
         self.setCorrectAnswer(random_question)
+        self.setQuestionIndex(random_question)
         return random_question_to_send
     
     def setCorrectAnswer(self, random_question):
         self.currentCorrectAnswer = self.trivia_questions[self.trivia_questions.index(random_question)]['is_true']
     
+    def setQuestionIndex(self, random_question):
+        self.currentQuestIndex = self.trivia_questions.index(random_question)
+
     def enoughConnected(self):
         return len(self.clientHandlers) >= 1
 
@@ -247,6 +236,47 @@ class Server:
     def resetWinner(self):
         self.winner_found = False
         self.winner_name = None
+
+    def sendFunStatistics(self):
+        mostWrongQuest = self.printMostWrongQuest()
+        statsMsg = f"\n{bcolors.OKCYAN}{bcolors.UNDERLINE}Some fun Statistics:{bcolors.ENDC}"
+        if self.fastestPlayerMsg != None or mostWrongQuest != None:
+            print(statsMsg)
+        
+            if self.fastestPlayerMsg !=None:
+                print(self.fastestPlayerMsg)
+            if mostWrongQuest != None:
+                print(mostWrongQuest)
+            for client in self.clientHandlers:
+                try:
+                    client.sendInfoToClient(statsMsg)
+                    if self.fastestPlayerMsg:
+                        client.sendInfoToClient(self.fastestPlayerMsg)
+                    
+                    if mostWrongQuest != None:
+                        client.sendInfoToClient(mostWrongQuest)
+                    else: 
+                        client.sendInfoToClient("\n")
+                except:
+                    break
+
+    def updateWrongQuestion(self):
+        self.trivia_questions[self.currentQuestIndex]['wrongCounter'] +=1
+
+    def updateFastestTimeQuestion(self, totalTime, fastestClientName):
+        self.fastestPlayerMsg = None
+        if self.trivia_questions[self.currentQuestIndex]['fastestTime'] > totalTime:
+            self.trivia_questions[self.currentQuestIndex]['fastestTime'] = totalTime
+            self.fastestPlayerMsg = f"\n- {bcolors.OKCYAN} {fastestClientName} is the fastest Chief of Staff of all times to answer correctly on this question!{bcolors.ENDC}\n"
+
+    def printMostWrongQuest(self):
+        questStatsMsg = None
+        max_wrong_question = max(self.trivia_questions, key=lambda x: x['wrongCounter'])
+        numberOfMistakes = self.trivia_questions[self.trivia_questions.index(max_wrong_question)]['wrongCounter']
+        if numberOfMistakes != 0:
+            hardestQuest = max_wrong_question['question']
+            questStatsMsg = f"\n- {bcolors.OKCYAN}The hardest question with most mistakes is: {hardestQuest}\n total mistakes: {numberOfMistakes}{bcolors.ENDC}\n\n"
+        return questStatsMsg
         
 
 def Main():
@@ -262,7 +292,8 @@ def Main():
             server.handleGameMode()
             server.resetGame()
         if server.enoughConnected():
-            end_msg = f"{bcolors.OKCYAN}Game over!\nCongratulations to the winner: {server.getWinnerName()}{bcolors.ENDC}"
+            end_msg = f"{bcolors.OKBLUE}Game over!\nCongratulations to the winner: {server.getWinnerName()}{bcolors.ENDC}"
+            server.sendFunStatistics()
             server.clearHandlers(end_msg)
             server.resetWinner()
         else:
