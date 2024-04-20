@@ -1,21 +1,25 @@
-import time
-from socket import socket
+import socket
 import threading
+from bcolors import bcolors
 
 
 class ClientHandler:
-    playerName = ""
-    bufferSize = 1024
-    sem = threading.Semaphore(0)
-    started = False
-    def __init__(self, clientSocket1):
-        self.clientSocket = clientSocket1
+    
+    def __init__(self, clientSocket, server):
+        self.clientSocket = clientSocket
+        self.server = server
+        self.continueGame = threading.Event()
+        self.playerName = ""
+        self.bufferSize = 1024
+        self.semaphore = threading.Semaphore(0)
+        self.answer = None
+        self.started = False
         
 
     def Run(self):
-
         self.recvPlayerName()
-        self.waitForStart()
+        self.waitGameStart()
+        self.manageGame()
 
     def recvPlayerName(self):
         try:
@@ -34,16 +38,54 @@ class ClientHandler:
     def sendInfoToClient(self, msgInfo):
         self.clientSocket.sendall(msgInfo.encode())
 
-    def waitForStart(self):
-        self.sem.acquire()
+    def waitGameStart(self):
+        self.semaphore.acquire()
 
     def startGame(self):
-        self.sem.release()
+        self.semaphore.release()
         self.started = True
+    
+    def endGame(self):
+        self.started = False
 
     def closeSocket(self):
         return self.clientSocket.close()
     
-    def setSocketTimeout(self, time):
-        self.clientSocket.settimeout(time)
+    def shutDownSocket(self):
+        self.clientSocket.shutdown(socket.SHUT_RDWR)
+
+    def recvClientAnswer(self):
+        try:
+            self.answer = self.clientSocket.recv(self.bufferSize).decode()
+        except:
+            return
+
+    def getAnswer(self):
+        return self.answer
     
+    def resetAnswer(self):
+        self.answer = None
+    
+    def contGame(self):
+        self.continueGame.set()
+
+    def manageGame(self):
+        while not self.server.getWinnerFound() and self.server.enoughConnected() and self.started:
+
+            self.recvClientAnswer()
+
+            if self.answer is not None: #Can be removed when notify added
+                # Check if the answer is correct
+                if self.server.checkResponse(self.answer):
+                    self.server.announceWinner(self.getPlayerName())
+                else:
+                    wrongMsg = f"\n{bcolors.FAIL}You are wrong. try next time.{bcolors.ENDC}"
+                    try:
+                        self.sendInfoToClient(wrongMsg)
+                    except:
+                        break
+                    lastDisq = self.server.announceDisqualify()
+                    if lastDisq:
+                        self.server.releaseDisqs()
+                    else:
+                        self.continueGame.wait()
