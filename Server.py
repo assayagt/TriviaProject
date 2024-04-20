@@ -89,11 +89,12 @@ class Server:
             except:
                 # stop receiving clients
                 return
-            self.resetTimer()
-            clientHandler = ClientHandler(clientSocket, self)
-            clientThread = threading.Thread(target=clientHandler.Run)
-            clientThread.start()
-            self.clientHandlers.append(clientHandler)
+            if clientSocket:
+                self.resetTimer()
+                clientHandler = ClientHandler(clientSocket, self)
+                clientThread = threading.Thread(target=clientHandler.Run)
+                clientThread.start()
+                self.clientHandlers.append(clientHandler)
 
     def getRandomQuestion(self):
         # Choose one random trivia question
@@ -107,30 +108,41 @@ class Server:
         self.currentCorrectAnswer = self.trivia_questions[self.trivia_questions.index(random_question)]['is_true']
     
     def enoughConnected(self):
-        return len(self.clientHandlers) >= 2
+        return len(self.clientHandlers) >= 1
 
     
     def initializeGame(self):
         player_names = ["Player" + str(index + 1) + ": " + client.getPlayerName() + "\n" for index, client in enumerate(self.clientHandlers)]
         welcome_message = f"Welcome to the Mystic server, where we are answering trivia questions about Aston Villa FC.\n {' '.join(player_names)}"
-        
+        clientsToRemove = []
         for client in self.clientHandlers:
             try:
                 client.sendInfoToClient(welcome_message)
-            except:
-                break
+            except ConnectionResetError:
+                clientsToRemove.append(client)
+        
+        for other_client in clientsToRemove:
+            if other_client in self.clientHandlers:
+                self.clientHandlers.remove(other_client)
+                del other_client
         print(welcome_message)
 
     def handleGameMode(self):
         random_question_to_print = self.getRandomQuestion()
+        clientsToRemove = []
         for client in self.clientHandlers:
             try:
                 client.sendInfoToClient(random_question_to_print)
             except ConnectionResetError:
-                self.clientHandlers.remove(client)
-                break
+                clientsToRemove.append(client)
+                continue
             if not client.getIfStarted():
                 client.startGame()
+
+        for other_client in clientsToRemove:
+            if other_client in self.clientHandlers:
+                self.clientHandlers.remove(other_client)
+                del other_client
         print(random_question_to_print)
 
         self.gameTime.wait(self.WAITING_TIME)
@@ -139,11 +151,17 @@ class Server:
     
     def sendTimeoutMsg(self):
         msg = "\nTime is up. You'll get a new question."
+        clientsToRemove = []
         for client in self.clientHandlers:
             try:
                 client.sendInfoToClient(msg)
             except ConnectionResetError:
-                self.clientHandlers.remove(client)
+                clientsToRemove.append(client)
+        
+        for other_client in clientsToRemove:
+            if other_client in self.clientHandlers:
+                self.clientHandlers.remove(other_client)
+                del other_client
         print(msg)
 
 
@@ -162,6 +180,7 @@ class Server:
                 other_client.sendInfoToClient(winner_message)
             except ConnectionResetError:
                 self.clientHandlers.remove(other_client)
+                del other_client
                 continue
         self.gameTime.set()
         
@@ -173,12 +192,19 @@ class Server:
     def releaseDisqs(self):
         disqMsg = f"\n{bcolors.WARNING}You are all wrong and disqualified, but I'll give you another chance :){bcolors.ENDC}\n"
         print(disqMsg)
+        clientsToRemove = []
         for client in self.clientHandlers:
             client.contGame()
             try:
                 client.sendInfoToClient(disqMsg)
             except ConnectionResetError:
-                self.clientHandlers.remove(client)
+                clientsToRemove.append(client)
+
+        for other_client in clientsToRemove:
+            if other_client in self.clientHandlers:
+                self.clientHandlers.remove(other_client)
+                del other_client
+
         self.gameTime.set()
         
 
@@ -190,6 +216,7 @@ class Server:
                 client.sendInfoToClient(end_message)
                 client.shutDownSocket()
                 client.closeSocket()
+                del client
             except Exception as e:
                 print(f"Error closing client socket: {e}")
                 continue
