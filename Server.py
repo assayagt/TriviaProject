@@ -97,7 +97,7 @@ class Server:
         self.currentQuestIndex = self.trivia_questions.index(random_question)
 
     def enoughConnected(self):
-        return len(self.clientHandlers) >= 1
+        return len(self.clientHandlers) >= 2
 
     
     def initializeGame(self):
