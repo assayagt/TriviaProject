@@ -15,7 +15,7 @@ class Server:
     MAGIC_COOKIE = 0xabcddcba
     MESSAGE_TYPE = 0x2
     SERVER_PORT = 12345
-    SERVER_NAME = "TeamMysticServer".ljust(32, '\0')  # Make the server name 32 characters long
+    SERVER_NAME = "RamatKalTriviaServer".ljust(32, '\0')  # Make the server name 32 characters long
     POSSIBLE_TRUE = ['Y', 'T', '1']
     POSSIBLE_FALSE = ['N', 'F', '0']
 
@@ -101,7 +101,7 @@ class Server:
 
     
     def initializeGame(self):
-        welcome_message = f"\nWelcome to the Mystic server, where we are answering trivia questions about Israel."
+        welcome_message = f"\nWelcome to the Ramat-Kal trivia server, where we are answering trivia questions about Israel."
         clientsToRemove = []
         for client in self.clientHandlers:
             try:
@@ -163,6 +163,8 @@ class Server:
         print(msg)
 
     def checkResponse(self, response):
+        if (response not in self.POSSIBLE_TRUE) and (response not in self.POSSIBLE_FALSE):
+            return None
         return response in self.POSSIBLE_TRUE and self.currentCorrectAnswer or response in self.POSSIBLE_FALSE and not self.currentCorrectAnswer
 
     def announceWinner(self, winner_name):

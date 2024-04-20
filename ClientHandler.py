@@ -83,7 +83,10 @@ class ClientHandler:
 
             if self.answer is not None: #Can be removed when notify added
                 # Check if the answer is correct
-                if self.server.checkResponse(self.answer):
+                response = self.server.checkResponse(self.answer)
+                if response is None:
+                    self.sendInfoToClient(f"\n{bcolors.WARNING}Your input is invalid. Please eneter T,Y,1 for true and F,N,0 for false.{bcolors.ENDC}\n")
+                elif response:
                     self.server.announceWinner(self.getPlayerName())
                     totalTime = timeOfAns - timeOfQuest
                     self.server.updateFastestTimeQuestion(totalTime, self.getPlayerName()) #statistics
