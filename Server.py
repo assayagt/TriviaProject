@@ -85,7 +85,7 @@ class Server:
         # Choose one random trivia question
         random_question = random.choice(self.trivia_questions)
         random_question_to_send = random_question["question"]
-        random_question_to_send = f"\nTrue or false: {random_question_to_send}"
+        random_question_to_send = f"\n{bcolors.OKGREEN}True{bcolors.ENDC} or {bcolors.FAIL}false{bcolors.ENDC}: {random_question_to_send}"
         self.setCorrectAnswer(random_question)
         self.setQuestionIndex(random_question)
         return random_question_to_send
@@ -101,7 +101,7 @@ class Server:
 
     
     def initializeGame(self):
-        welcome_message = f"Welcome to the Mystic server, where we are answering trivia questions about Israel.\n"
+        welcome_message = f"\nWelcome to the Mystic server, where we are answering trivia questions about Israel."
         clientsToRemove = []
         for client in self.clientHandlers:
             try:
@@ -115,7 +115,7 @@ class Server:
                 del other_client
         
         player_names = ["Player" + str(index + 1) + ": " + client.getPlayerName() + "\n" for index, client in enumerate(self.clientHandlers)]
-        fullMsg = welcome_message + " ".join(player_names)
+        fullMsg = welcome_message + "".join(player_names)
         for client in self.clientHandlers:
             try:
                 client.sendInfoToClient(''.join(player_names))
@@ -147,7 +147,7 @@ class Server:
             self.sendTimeoutMsg()
     
     def sendTimeoutMsg(self):
-        msg = "\nTime is up. You'll get a new question."
+        msg = f"\n{bcolors.WARNING}Time is up. You'll get a new question.{bcolors.ENDC}"
         clientsToRemove = []
         for client in self.clientHandlers:
             try:
@@ -238,6 +238,11 @@ class Server:
         self.currentCorrectAnswer = None
         self.gameTime.clear()
         self.countDisqs = 0
+
+        for client in self.clientHandlers:
+            client.contGame()
+            client.resetContGame()
+
     
     def resetWinner(self):
         self.winner_found = False

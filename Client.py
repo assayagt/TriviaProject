@@ -5,6 +5,8 @@ import msvcrt
 import random
 import time
 
+from bcolors import bcolors
+
 class Client:
     # Constants
     BUFFER_SIZE = 1024
@@ -44,7 +46,7 @@ class Client:
             udp_socket.bind(('', 13117))
             return udp_socket
         except OSError as e:
-            print("\nError creating UDP socket")
+            print(f"\n{bcolors.FAIL}Error creating UDP socket{bcolors.ENDC}")
             return None
 
     # Function to listen for offer announcements
@@ -65,7 +67,7 @@ class Client:
             tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             # Connect to the server
             tcp_socket.connect((server_ip, server_port))
-            print("Connected!")
+            print(f"{bcolors.OKGREEN}Connected!{bcolors.ENDC}")
 
             # Send player name
             player_name = random.choice(self.chief_of_staff_names)  # Change this to the player's name
@@ -73,7 +75,7 @@ class Client:
             return tcp_socket
         
         except Exception as e:
-            print("\nFailed to connect to the server")
+            print(f"\n{bcolors.FAIL}Failed to connect to the server{bcolors.ENDC}")
             return None
 
     # Function to handle user input
@@ -84,7 +86,7 @@ class Client:
                 try:
                     tcp_socket.send(msvcrt.getche())
                 except Exception as e:
-                    print(f"\nError sending data to server")
+                    print(f"\n{bcolors.FAIL}Error sending data to server{bcolors.ENDC}")
                     break
 
             time.sleep(0.2)

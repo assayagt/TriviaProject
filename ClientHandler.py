@@ -65,9 +65,15 @@ class ClientHandler:
     
     def resetAnswer(self):
         self.answer = None
+
+    def getContGame(self):
+        return self.continueGame
     
     def contGame(self):
         self.continueGame.set()
+    
+    def resetContGame(self):
+        self.continueGame.clear()
 
     def manageGame(self):
         while not self.server.getWinnerFound() and self.server.enoughConnected() and self.started:
