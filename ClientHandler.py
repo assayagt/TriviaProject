@@ -4,15 +4,16 @@ from bcolors import bcolors
 
 
 class ClientHandler:
-    playerName = ""
-    bufferSize = 1024
-    semaphore = threading.Semaphore(0)
-    answer = None
-    started = False
+    
     def __init__(self, clientSocket, server):
         self.clientSocket = clientSocket
         self.server = server
         self.continueGame = threading.Event()
+        self.playerName = ""
+        self.bufferSize = 1024
+        self.semaphore = threading.Semaphore(0)
+        self.answer = None
+        self.started = False
         
 
     def Run(self):
@@ -54,12 +55,10 @@ class ClientHandler:
         self.clientSocket.shutdown(socket.SHUT_RDWR)
 
     def recvClientAnswer(self):
-        while self.started:
-            try:
-                self.answer = self.clientSocket.recv(self.bufferSize).decode()
-                break
-            except:
-                break
+        try:
+            self.answer = self.clientSocket.recv(self.bufferSize).decode()
+        except:
+            return
 
     def getAnswer(self):
         return self.answer
@@ -71,7 +70,7 @@ class ClientHandler:
         self.continueGame.set()
 
     def manageGame(self):
-        while not self.server.getWinnerFound() and self.server.enoughConnected():
+        while not self.server.getWinnerFound() and self.server.enoughConnected() and self.started:
 
             self.recvClientAnswer()
 
