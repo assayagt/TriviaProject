@@ -17,6 +17,9 @@ class ClientHandler:
         
 
     def Run(self):
+        '''
+        thread function for running each player. waiting until game is started
+        '''
         self.recvPlayerName()
         self.waitGameStart()
         self.manageGame()
@@ -76,6 +79,9 @@ class ClientHandler:
         self.continueGame.clear()
 
     def manageGame(self):
+        '''
+        manage game for each client and handle the connection with the client
+        '''
         while not self.server.getWinnerFound() and self.server.enoughConnected() and self.started:
             timeOfQuest = time.time() #just for statistics
             self.recvClientAnswer()
@@ -84,8 +90,12 @@ class ClientHandler:
             if self.answer is not None: #Can be removed when notify added
                 # Check if the answer is correct
                 response = self.server.checkResponse(self.answer)
+                print(response)
                 if response is None:
-                    self.sendInfoToClient(f"\n{bcolors.WARNING}Your input is invalid. Please eneter T,Y,1 for true and F,N,0 for false.{bcolors.ENDC}\n")
+                    try:
+                        self.sendInfoToClient(f"\n{bcolors.WARNING}Your input is invalid. Please eneter T,Y,1 for true and F,N,0 for false.{bcolors.ENDC}\n")
+                    except:
+                        continue
                 elif response:
                     self.server.announceWinner(self.getPlayerName())
                     totalTime = timeOfAns - timeOfQuest
