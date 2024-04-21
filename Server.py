@@ -197,7 +197,7 @@ class Server:
 
     def checkResponse(self, response):
         '''
-        Check if answer is a valid key. if its valid, send the result of the answer (if the player answered correctly\incorrectly) according to the input
+        Check if answer is a valid key. if its valid, send the result of the answer (if the player answered correctly or incorrectly) according to the input
         '''
         if (response not in self.POSSIBLE_TRUE) and (response not in self.POSSIBLE_FALSE):
             return None
